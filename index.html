@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priority Queue Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #5c5b57;
+    --text3: #9c9a92;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb;
+    --info-border: #378add;
+    --info-text: #0c447c;
+    --warn-bg: #faeeda;
+    --warn-border: #ba7517;
+    --warn-text: #633806;
+    --success-bg: #eaf3de;
+    --success-border: #3b6d11;
+    --success-text: #27500a;
+    --danger-bg: #fcebeb;
+    --danger-border: #a32d2d;
+    --danger-text: #501313;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a27;
+      --bg3: #323230;
+      --text: #e8e6dc;
+      --text2: #a8a69e;
+      --text3: #6e6c65;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --info-bg: #042c53;
+      --info-border: #185fa5;
+      --info-text: #85b7eb;
+      --warn-bg: #412402;
+      --warn-border: #854f0b;
+      --warn-text: #fac775;
+      --success-bg: #173404;
+      --success-border: #27500a;
+      --success-text: #c0dd97;
+      --danger-bg: #501313;
+      --danger-border: #791f1f;
+      --danger-text: #f09595;
+    }
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 6px;
+  }
+
+  .card {
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    padding: 20px 24px;
+    max-width: 820px;
+    margin: 0 auto 16px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .type-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
+
+  .type-btn {
+    font-size: 13px;
+    padding: 5px 16px;
+    border: 0.5px solid var(--border2);
+    border-radius: 99px;
+    cursor: pointer;
+    background: var(--bg2);
+    color: var(--text2);
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .type-btn.active {
+    background: var(--info-bg);
+    border-color: var(--info-border);
+    color: var(--info-text);
+    font-weight: 500;
+  }
+
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+
+  .controls input {
+    width: 80px;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    outline: none;
+  }
+
+  .controls input:focus { border-color: var(--info-border); }
+
+  .btn {
+    font-size: 13px;
+    padding: 6px 16px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--bg2); }
+  .btn:active { transform: scale(0.97); }
+  .btn.success { border-color: var(--success-border); color: var(--success-text); }
+  .btn.success:hover { background: var(--success-bg); }
+  .btn.danger { border-color: var(--danger-border); color: var(--danger-text); }
+  .btn.danger:hover { background: var(--danger-bg); }
+
+  .info-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+
+  .badge {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 0.5px solid var(--border);
+    color: var(--text2);
+    background: var(--bg2);
+  }
+
+  .badge strong { color: var(--text); font-weight: 500; }
+
+  #log {
+    font-size: 12.5px;
+    color: var(--text2);
+    min-height: 22px;
+    margin-bottom: 12px;
+    border-left: 2px solid var(--info-border);
+    padding-left: 10px;
+    line-height: 1.5;
+  }
+
+  #heap-svg { width: 100%; display: block; overflow: visible; }
+
+  .node-text-main {
+    font-size: 13px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: central;
+    fill: var(--text);
+  }
+
+  .node-text-pri {
+    font-size: 9px;
+    text-anchor: middle;
+    fill: var(--text3);
+  }
+
+  .edge-line { stroke: var(--border2); stroke-width: 1.5; }
+
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 16px 0; }
+
+  #array-view { display: flex; gap: 5px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 4px; }
+
+  .arr-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+  .arr-val {
+    width: 36px;
+    height: 36px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.35s, border-color 0.35s;
+  }
+
+  .arr-val.root-cell { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  .arr-val.highlight { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+
+  .arr-idx { font-size: 9px; color: var(--text3); }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 10px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+  #step-box {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    min-height: 50px;
+  }
+
+  #step-box strong { color: var(--text); }
+
+  .formula-box {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 2;
+    font-family: 'Courier New', monospace;
+  }
+
+  .formula-box span { color: var(--info-text); font-weight: 600; }
+
+  .complexity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .complexity-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    border: 0.5px solid var(--border);
+  }
+
+  .complexity-card .op { font-size: 13px; font-weight: 500; color: var(--text); }
+  .complexity-card .tc { font-size: 20px; font-weight: 600; color: var(--info-text); margin: 4px 0 2px; font-family: 'Courier New', monospace; }
+  .complexity-card .desc { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Priority Queue Visualizer</h1>
+  <p>Interactive Heap Visualization &mdash; Data Structures Assignment</p>
+</div>
+
+<!-- Main Visualizer -->
+<div class="card">
+  <div class="section-label">Heap Type</div>
+  <div class="type-toggle">
+    <button class="type-btn active" id="btn-max" onclick="setType('max')">Max Heap</button>
+    <button class="type-btn" id="btn-min" onclick="setType('min')">Min Heap</button>
+  </div>
+
+  <div class="section-label">Operations</div>
+  <div class="controls">
+    <input type="number" id="val-input" placeholder="Value" min="1" max="99" value="42">
+    <input type="number" id="pri-input" placeholder="Priority" min="1" max="99" value="7">
+    <button class="btn success" onclick="insertNode()">+ Insert</button>
+    <button class="btn danger" onclick="extractRoot()">Extract Root</button>
+    <button class="btn" onclick="peekRoot()">Peek</button>
+    <button class="btn" onclick="clearAll()">Clear</button>
+  </div>
+
+  <div class="info-bar">
+    <span class="badge">Size: <strong id="size-label">0</strong></span>
+    <span class="badge">Root: <strong id="root-label">—</strong></span>
+    <span class="badge">Height: <strong id="height-label">0</strong></span>
+  </div>
+
+  <div id="log">Pre-loaded 4 nodes. Try Insert, Extract Root, or Peek!</div>
+
+  <svg id="heap-svg" viewBox="0 0 640 300"></svg>
+
+  <div class="legend">
+    <span><span class="dot" style="background:#378add"></span>Normal node</span>
+    <span><span class="dot" style="background:#ba7517"></span>Root (max/min)</span>
+    <span><span class="dot" style="background:#3b6d11"></span>Newly inserted / peeked</span>
+    <span><span class="dot" style="background:#a32d2d"></span>Being extracted</span>
+  </div>
+</div>
+
+<!-- Array Representation -->
+<div class="card">
+  <div class="section-label">Array Representation (underlying storage)</div>
+  <div id="array-view"></div>
+  <p style="font-size:11px;color:var(--text3);margin-top:8px;">Index 0 = root &nbsp;|&nbsp; Hover cells to see priority &nbsp;|&nbsp; Orange = root</p>
+</div>
+
+<!-- Step Explanation -->
+<div class="card">
+  <div class="section-label">Step-by-step Explanation</div>
+  <div id="step-box">A <strong>Max Heap</strong> ensures parent priority &ge; child priority. The root always holds the maximum priority element. Insert adds at the end then sifts up; Extract removes the root and sifts down.</div>
+</div>
+
+<!-- Index Formulas -->
+<div class="card">
+  <div class="section-label">Index Formulas (array-based heap)</div>
+  <div class="formula-box">
+    Parent of node i &nbsp;&nbsp;&nbsp;&nbsp;&rarr; &nbsp;<span>&lfloor;(i &minus; 1) / 2&rfloor;</span><br>
+    Left child of i &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&rarr; &nbsp;<span>2i + 1</span><br>
+    Right child of i &nbsp;&nbsp;&nbsp;&nbsp;&rarr; &nbsp;<span>2i + 2</span><br>
+    Root always at &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&rarr; &nbsp;<span>index 0</span>
+  </div>
+</div>
+
+<!-- Time Complexity -->
+<div class="card">
+  <div class="section-label">Time Complexity</div>
+  <div class="complexity-grid">
+    <div class="complexity-card">
+      <div class="op">Insert</div>
+      <div class="tc">O(log n)</div>
+      <div class="desc">Sift up at most tree height times</div>
+    </div>
+    <div class="complexity-card">
+      <div class="op">Extract Root</div>
+      <div class="tc">O(log n)</div>
+      <div class="desc">Sift down after replacing root</div>
+    </div>
+    <div class="complexity-card">
+      <div class="op">Peek</div>
+      <div class="tc">O(1)</div>
+      <div class="desc">Root is always at index 0</div>
+    </div>
+    <div class="complexity-card">
+      <div class="op">Build Heap</div>
+      <div class="tc">O(n)</div>
+      <div class="desc">Heapify from last internal node</div>
+    </div>
+    <div class="complexity-card">
+      <div class="op">Search</div>
+      <div class="tc">O(n)</div>
+      <div class="desc">No heap property helps search</div>
+    </div>
+    <div class="complexity-card">
+      <div class="op">Space</div>
+      <div class="tc">O(n)</div>
+      <div class="desc">Just an array — no pointers needed</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let heapType = 'max';
+  let heap = [];
+  let nodeId = 0;
+  let highlighted = new Set();
+
+  function setType(t) {
+    heapType = t;
+    document.getElementById('btn-max').classList.toggle('active', t === 'max');
+    document.getElementById('btn-min').classList.toggle('active', t === 'min');
+    if (heap.length > 0) { heapify(); renderAll(); }
+    setLog('Switched to <strong>' + (t === 'max' ? 'Max Heap' : 'Min Heap') + '</strong>. Heap rebuilt.');
+    setStep('A <strong>' + (t === 'max' ? 'Max Heap' : 'Min Heap') + '</strong> ensures every parent priority is ' + (t === 'max' ? '&ge;' : '&le;') + ' its children. The root always holds the ' + (t === 'max' ? 'maximum' : 'minimum') + ' priority element.');
+    updateInfo();
+  }
+
+  function cmp(a, b) { return heapType === 'max' ? a.pri > b.pri : a.pri < b.pri; }
+  function swap(i, j) { var t = heap[i]; heap[i] = heap[j]; heap[j] = t; }
+
+  function heapify() {
+    for (var i = Math.floor(heap.length / 2) - 1; i >= 0; i--) siftDown(i);
+  }
+
+  function siftUp(i) {
+    while (i > 0) {
+      var p = Math.floor((i - 1) / 2);
+      if (cmp(heap[i], heap[p])) { swap(i, p); i = p; } else break;
+    }
+  }
+
+  function siftDown(i) {
+    var n = heap.length;
+    while (true) {
+      var best = i, l = 2*i+1, r = 2*i+2;
+      if (l < n && cmp(heap[l], heap[best])) best = l;
+      if (r < n && cmp(heap[r], heap[best])) best = r;
+      if (best !== i) { swap(i, best); i = best; } else break;
+    }
+  }
+
+  function insertNode() {
+    var val = parseInt(document.getElementById('val-input').value) || (Math.floor(Math.random()*90)+10);
+    var pri = parseInt(document.getElementById('pri-input').value) || (Math.floor(Math.random()*20)+1);
+    if (heap.length >= 15) { setLog('Max 15 nodes for clear visualization.'); return; }
+    var node = { val: val, pri: pri, id: nodeId++ };
+    heap.push(node);
+    var idx = heap.length - 1;
+    setLog('Inserted <strong>Value=' + val + ', Priority=' + pri + '</strong> at index ' + idx + '.');
+    setStep('<strong>Insert (Sift Up):</strong> New node with priority ' + pri + ' placed at last position (index ' + idx + '). Compare with parent at &lfloor;(' + idx + '&minus;1)/2&rfloor; = ' + Math.floor((idx-1)/2) + '. If priority is ' + (heapType==='max'?'higher':'lower') + ', swap upward. Repeat until heap property is satisfied. Time: O(log n).');
+    highlighted = new Set([node.id]);
+    renderAll('insert');
+    siftUp(idx);
+    setTimeout(function() { highlighted = new Set(); renderAll(); updateInfo(); }, 1000);
+    updateInfo();
+  }
+
+  function extractRoot() {
+    if (!heap.length) { setLog('Heap is empty.'); return; }
+    var root = heap[0];
+    setLog('Extracted root: <strong>Value=' + root.val + ', Priority=' + root.pri + '</strong>.');
+    setStep('<strong>Extract Root (Sift Down):</strong> Root (priority ' + root.pri + ') removed. Last element moves to root position (index 0). Then sift down: compare with children at 2i+1 and 2i+2, swap with the ' + (heapType==='max'?'larger':'smaller') + ' child if needed. Time: O(log n).');
+    highlighted = new Set([root.id]);
+    renderAll('extract');
+    setTimeout(function() {
+      if (heap.length === 1) heap = [];
+      else { heap[0] = heap.pop(); siftDown(0); }
+      highlighted = new Set();
+      renderAll();
+      updateInfo();
+    }, 800);
+  }
+
+  function peekRoot() {
+    if (!heap.length) { setLog('Heap is empty.'); return; }
+    var r = heap[0];
+    setLog('Peek: Root is <strong>Value=' + r.val + ', Priority=' + r.pri + '</strong>. Not removed.');
+    setStep('<strong>Peek:</strong> The root (index 0) always holds the ' + (heapType==='max'?'maximum':'minimum') + ' priority element. Reading it is O(1) &mdash; no traversal or restructuring needed.');
+    highlighted = new Set([r.id]);
+    renderAll('peek');
+    setTimeout(function() { highlighted = new Set(); renderAll(); }, 1200);
+  }
+
+  function clearAll() {
+    heap = []; highlighted = new Set();
+    renderAll(); updateInfo();
+    setLog('Cleared. Ready for new insertions.');
+    setStep('Waiting for an operation&hellip;');
+  }
+
+  function setLog(html) { document.getElementById('log').innerHTML = html; }
+  function setStep(html) { document.getElementById('step-box').innerHTML = html; }
+
+  function updateInfo() {
+    document.getElementById('size-label').textContent = heap.length;
+    document.getElementById('root-label').textContent = heap.length ? 'Val=' + heap[0].val + ' (P=' + heap[0].pri + ')' : '—';
+    document.getElementById('height-label').textContent = heap.length ? Math.floor(Math.log2(heap.length)) + 1 : 0;
+  }
+
+  function nodePositions(n) {
+    var pos = [], W = 640, topY = 40, levelH = 72;
+    for (var i = 0; i < n; i++) {
+      var level = Math.floor(Math.log2(i + 1));
+      var levelCount = Math.pow(2, level);
+      var posInLevel = i - (levelCount - 1);
+      pos.push({ x: W / (levelCount + 1) * (posInLevel + 1), y: topY + level * levelH });
+    }
+    return pos;
+  }
+
+  function renderAll(op) {
+    var svg = document.getElementById('heap-svg');
+    var n = heap.length;
+    var maxLevel = n ? Math.floor(Math.log2(n)) : 0;
+    var svgH = Math.max(200, (maxLevel + 1) * 72 + 60);
+    svg.setAttribute('viewBox', '0 0 640 ' + svgH);
+    svg.innerHTML = '';
+    var pos = nodePositions(n);
+    var R = Math.max(18, 26 - Math.floor(n / 3));
+
+    for (var i = 1; i < n; i++) {
+      var p = Math.floor((i - 1) / 2);
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', pos[p].x); line.setAttribute('y1', pos[p].y);
+      line.setAttribute('x2', pos[i].x); line.setAttribute('y2', pos[i].y);
+      line.setAttribute('stroke', 'var(--border2)'); line.setAttribute('stroke-width', '1.5');
+      svg.appendChild(line);
+    }
+
+    for (var i = 0; i < n; i++) {
+      var x = pos[i].x, y = pos[i].y;
+      var node = heap[i];
+      var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.style.cursor = 'pointer';
+
+      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', R);
+      circle.setAttribute('stroke-width', '1.5');
+
+      var fill, stroke;
+      if (highlighted.has(node.id) && op === 'extract') { fill = 'var(--danger-bg)'; stroke = 'var(--danger-border)'; }
+      else if (highlighted.has(node.id)) { fill = 'var(--success-bg)'; stroke = 'var(--success-border)'; }
+      else if (i === 0) { fill = 'var(--warn-bg)'; stroke = 'var(--warn-border)'; }
+      else { fill = 'var(--info-bg)'; stroke = 'var(--info-border)'; }
+
+      circle.setAttribute('fill', fill);
+      circle.setAttribute('stroke', stroke);
+      circle.style.transition = 'fill 0.4s';
+
+      var valText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      valText.setAttribute('x', x); valText.setAttribute('y', y - 4);
+      valText.setAttribute('text-anchor', 'middle');
+      valText.setAttribute('dominant-baseline', 'central');
+      valText.setAttribute('font-size', Math.max(10, R * 0.65));
+      valText.setAttribute('font-weight', '600');
+      valText.setAttribute('fill', 'var(--text)');
+      valText.setAttribute('font-family', 'Inter, sans-serif');
+      valText.textContent = node.val;
+
+      var priText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      priText.setAttribute('x', x); priText.setAttribute('y', y + R - 4);
+      priText.setAttribute('text-anchor', 'middle');
+      priText.setAttribute('font-size', '9');
+      priText.setAttribute('fill', 'var(--text3)');
+      priText.setAttribute('font-family', 'Inter, sans-serif');
+      priText.textContent = 'P:' + node.pri;
+
+      g.appendChild(circle);
+      g.appendChild(valText);
+      g.appendChild(priText);
+      svg.appendChild(g);
+    }
+
+    var av = document.getElementById('array-view');
+    av.innerHTML = '';
+    if (!n) { av.innerHTML = '<span style="font-size:12px;color:var(--text3)">Empty</span>'; return; }
+    for (var i = 0; i < n; i++) {
+      var cell = document.createElement('div');
+      cell.className = 'arr-cell';
+      var valDiv = document.createElement('div');
+      valDiv.className = 'arr-val' + (i === 0 ? ' root-cell' : '') + (highlighted.has(heap[i].id) ? ' highlight' : '');
+      valDiv.textContent = heap[i].val;
+      valDiv.title = 'Priority: ' + heap[i].pri;
+      var idxDiv = document.createElement('div');
+      idxDiv.className = 'arr-idx';
+      idxDiv.textContent = i;
+      cell.appendChild(valDiv);
+      cell.appendChild(idxDiv);
+      av.appendChild(cell);
+    }
+  }
+
+  // Preload nodes
+  var preload = [{val:42,pri:9},{val:17,pri:5},{val:88,pri:12},{val:31,pri:7}];
+  for (var i = 0; i < preload.length; i++) {
+    heap.push({ val: preload[i].val, pri: preload[i].pri, id: nodeId++ });
+    siftUp(heap.length - 1);
+  }
+  renderAll();
+  updateInfo();
+</script>
+</body>
+</html>
